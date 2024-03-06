@@ -23,26 +23,29 @@ const App = () => {
       date: new Date(),
       completed: false,
     };
-    setTodos([...todos, newTodo]);
-    setText('');
+    AsyncStorage.setItem('@todos', JSON.stringify([...todos, newTodo]))
+      .then(res => {
+        setTodos([...todos, newTodo]);
+        setText('');
+      })
+      .catch(err => {
+        Alert.alert("ERROR","An error occur saving.")
+      });
   };
 
- /**
-  * 
-  *   useEffect(()=>{
-    AsyncStorage.getItem("@todos")
-    .then(res=>{
-      console.log(res);
-      if(res !== null){
-        const parseRes = JSON.parse(res)
-        setTodos(parseRes)
-      }
-    })
-    .catch(err=>{
-      console.log(err);
-    })
-  },[])
-  */
+  useEffect(() => {
+    AsyncStorage.getItem('@todos')
+      .then(res => {
+        console.log(res);
+        if (res !== null) {
+          const parseRes = JSON.parse(res);
+          setTodos(parseRes);
+        }
+      })
+      .catch(err => {
+        console.log(err);
+      });
+  }, []);
 
   return (
     <SafeAreaView style={app.body}>
@@ -60,9 +63,14 @@ const App = () => {
           <Text style={todo.emptyTodo}>There isn't any recorded todos.</Text>
         ) : (
           <ScrollView style={todo.scrollView}>
-            {
-              todos?.map((item)=>(<Todo key={item?.id} item={item} todos={todos} setTodos={setTodos} />))
-            }
+            {todos?.map(item => (
+              <Todo
+                key={item?.id}
+                item={item}
+                todos={todos}
+                setTodos={setTodos}
+              />
+            ))}
           </ScrollView>
         )}
       </View>

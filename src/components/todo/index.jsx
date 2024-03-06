@@ -1,6 +1,6 @@
 import {Alert, Text, TouchableOpacity, View} from 'react-native';
-import { useState } from 'react';
-import { COLORS } from '../../../utils/constants';
+import {useState} from 'react';
+import {COLORS} from '../../../utils/constants';
 
 // import styles
 import todoStyles from './style';
@@ -12,14 +12,16 @@ import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 
 // import components
 import EditModal from '../editModal';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// import storage
 
 const Todo = ({item = {}, todos = [], setTodos = () => {}}) => {
-  const [openModal,setOpenModal]=useState(false)
-  const [willEditText,setWillEditText]=useState(item.text)
-  const[err,setErr]=useState(false)
-  const[errMessage,setErrMessage]=useState("")
-  
+  const [openModal, setOpenModal] = useState(false);
+  const [willEditText, setWillEditText] = useState(item.text);
+  const [err, setErr] = useState(false);
+  const [errMessage, setErrMessage] = useState('');
+
   const handleDelete = () => {
     console.log(handleDelete);
     Alert.alert(
@@ -32,7 +34,11 @@ const Todo = ({item = {}, todos = [], setTodos = () => {}}) => {
           text: 'Delete',
           onPress: () => {
             const filteredTodos = todos.filter(x => x.id !== item.id);
-            setTodos(filteredTodos);
+            AsyncStorage.setItem('@todos', JSON.stringify(filteredTodos))
+              .then(res => setTodos(filteredTodos))
+              .catch(err => {
+                Alert.alert('ERROR', 'An error occur saving.');
+              });
           },
           style: 'destructive',
         },
@@ -63,7 +69,11 @@ const Todo = ({item = {}, todos = [], setTodos = () => {}}) => {
               }
             }
             // Update the state with the modified array
-            setTodos(tempArray)
+            AsyncStorage.setItem('@todos', JSON.stringify(tempArray))
+              .then(res => setTodos(tempArray))
+              .catch(err => {
+                Alert.alert('ERROR', 'An error occur saving.');
+              });
           },
           style: 'destructive',
         },
@@ -71,19 +81,19 @@ const Todo = ({item = {}, todos = [], setTodos = () => {}}) => {
     );
   };
 
-  const handleEdit =()=>{
+  const handleEdit = () => {
     //Validation
-    if(willEditText === ""){
-      setErr(true)
-      setErrMessage("*You cannot save it empty.")
+    if (willEditText === '') {
+      setErr(true);
+      setErrMessage('*You cannot save it empty.');
       setTimeout(() => {
-        setErr(false)
-        setErrMessage("")
+        setErr(false);
+        setErrMessage('');
       }, 3000);
-      return
+      return;
     }
     // Update
-    const tempArray=[]
+    const tempArray = [];
     for (let i = 0; i < todos.length; i++) {
       if (todos[i].id !== item.id) {
         tempArray.push(todos[i]);
@@ -97,14 +107,26 @@ const Todo = ({item = {}, todos = [], setTodos = () => {}}) => {
       }
     }
     // Update the state with the modified array
-    setTodos(tempArray)
-    setOpenModal(false)
-  }
+    AsyncStorage.setItem('@todos', JSON.stringify(tempArray))
+      .then(res => {
+        setTodos(tempArray);
+        setOpenModal(false);
+      })
+      .catch(err => {
+        Alert.alert('ERROR', 'An error occur saving.');
+      });
+  };
 
   return (
     <View style={todoStyles.todoWrapper}>
       <View style={todoStyles.textWrapper}>
-        <Text style={[todoStyles.title,item.completed && todoStyles.completedTask]}>{item?.text}</Text>
+        <Text
+          style={[
+            todoStyles.title,
+            item.completed && todoStyles.completedTask,
+          ]}>
+          {item?.text}
+        </Text>
         <Text style={todoStyles.date}>
           {new Date(item?.date).toLocaleString('en-EN')}
         </Text>
@@ -123,7 +145,7 @@ const Todo = ({item = {}, todos = [], setTodos = () => {}}) => {
           />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={()=>setOpenModal(true)}>
+        <TouchableOpacity onPress={() => setOpenModal(true)}>
           <AntDesignIcon name="edit" size={30} color="#F6995C" />
         </TouchableOpacity>
 
@@ -131,19 +153,17 @@ const Todo = ({item = {}, todos = [], setTodos = () => {}}) => {
           <FontAwesomeIcon name="remove" size={30} color="#BE3144" />
         </TouchableOpacity>
       </View>
-      <EditModal 
-      visible={openModal}
-      closeModal={()=>setOpenModal(false)}
-      willEditText={willEditText}
-      setWillEditText={setWillEditText}
-      onSave={handleEdit}
-      err={err}
-      errMessage={errMessage}
+      <EditModal
+        visible={openModal}
+        closeModal={() => setOpenModal(false)}
+        willEditText={willEditText}
+        setWillEditText={setWillEditText}
+        onSave={handleEdit}
+        err={err}
+        errMessage={errMessage}
       />
     </View>
   );
 };
 
 export default Todo;
-
-
